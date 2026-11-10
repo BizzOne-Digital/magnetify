@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Info } from "lucide-react";
 import { getPageContent, getProducts, getShippingConfig, getSiteSettings } from "@/lib/data";
+import { freeShippingText } from "@/lib/shipping";
+import { Truck } from "lucide-react";
 import { PageHero, SectionHeading } from "@/components/site/ui";
 import { BulkPricing } from "@/components/site/BulkPricing";
 
@@ -68,11 +70,17 @@ export default async function PricingPage() {
           <Info className="h-5 w-5 text-gold" aria-hidden="true" /> {site.finalSaleNotice}
         </p>
         {shipping.shippingEnabled ? (
-          <p className="mt-2 text-center text-sm text-muted">
-            Shipping: ${shipping.flatShippingRate.toFixed(2)} flat rate
-            {shipping.freeShippingThreshold > 0 ? ` · Free shipping on orders over $${shipping.freeShippingThreshold.toFixed(2)}` : ""}
-            {shipping.localPickupEnabled ? " · Local pickup available" : ""}
-          </p>
+          <div className="mt-4 text-center">
+            {freeShippingText(shipping) ? (
+              <p className="flex items-center justify-center gap-2 font-display text-lg font-bold text-gold-light">
+                <Truck className="h-5 w-5" aria-hidden="true" /> {freeShippingText(shipping)}
+              </p>
+            ) : null}
+            {shipping.shippingNotice ? <p className="mt-1 text-sm font-bold uppercase tracking-wider text-cream">{shipping.shippingNotice}</p> : null}
+            <p className="mt-1 text-xs text-muted">
+              Otherwise ${shipping.flatShippingRate.toFixed(2)} flat rate{shipping.localPickupEnabled ? " · Local pickup available" : ""}
+            </p>
+          </div>
         ) : null}
 
         {c.faqs?.length ? (

@@ -12,17 +12,41 @@ export interface ShippingConfig {
   localPickupEnabled: boolean;
   localPickupNote: string;
   zones: { name: string; provinces: string[]; rate: number }[];
+  /** Province codes we ship to. Empty = all of Canada. */
+  allowedProvinces: string[];
+  /** Short public notice, e.g. "Currently shipping within BC only". */
+  shippingNotice: string;
 }
+
+export const PROVINCE_NAMES: Record<string, string> = {
+  AB: "Alberta", BC: "British Columbia", MB: "Manitoba", NB: "New Brunswick", NL: "Newfoundland and Labrador",
+  NS: "Nova Scotia", NT: "Northwest Territories", NU: "Nunavut", ON: "Ontario", PE: "Prince Edward Island",
+  QC: "Quebec", SK: "Saskatchewan", YT: "Yukon",
+};
 
 export const DEFAULT_SHIPPING: ShippingConfig = {
   shippingEnabled: true,
   mode: "flat",
   flatShippingRate: 4.99,
-  freeShippingThreshold: 75,
+  freeShippingThreshold: 100,
   localPickupEnabled: false,
   localPickupNote: "",
   zones: [],
+  allowedProvinces: ["BC"],
+  shippingNotice: "Currently shipping within BC only",
 };
+
+export function shipsTo(config: ShippingConfig, province?: string) {
+  if (!config.allowedProvinces.length) return true;
+  return Boolean(province) && config.allowedProvinces.includes(province!.toUpperCase());
+}
+
+/** e.g. "Free shipping on orders of $100 or more" */
+export function freeShippingText(config: ShippingConfig) {
+  if (config.freeShippingThreshold <= 0) return "";
+  const t = config.freeShippingThreshold;
+  return `Free shipping on orders of $${Number.isInteger(t) ? t.toFixed(0) : t.toFixed(2)} or more`;
+}
 
 export interface ShippingQuoteInput {
   subtotal: number;
@@ -51,6 +75,9 @@ export const configShippingProvider: ShippingProvider = {
     }
     if (!c.shippingEnabled) {
       return { amount: 0, label: "Shipping currently unavailable", available: false, freeShippingRemaining: null };
+    }
+    if (input.province && !shipsTo(c, input.province)) {
+      return { amount: 0, label: c.shippingNotice || "We do not ship to this province yet", available: false, freeShippingRemaining: null };
     }
     const threshold = c.freeShippingThreshold > 0 ? c.freeShippingThreshold : null;
     if (threshold !== null && input.subtotal >= threshold) {

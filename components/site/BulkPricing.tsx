@@ -12,7 +12,7 @@ export function BulkPricing({ title, products }: { title: string; products: Publ
       <SectionHeading title={title} />
       <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-8">
         {tierQtys.map((qty) => {
-          const label = photo.flatMap((p) => p.bulkTiers).find((t) => t.minQty === qty)?.label || `OVER ${qty} MAGNETS`;
+          const label = photo.flatMap((p) => p.bulkTiers).find((t) => t.minQty === qty)?.label || `${qty}+ MAGNETS`;
           return (
             <div key={qty} className="card-gold relative px-4 pb-5 pt-8 sm:px-6">
               <span className="badge-sale absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap px-6 py-1.5 text-sm sm:text-base">

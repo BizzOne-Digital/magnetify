@@ -33,7 +33,7 @@ export function PricingEditor({ products }: { products: P[] }) {
   const update = (id: string, patch: Partial<P>) => setRows((rs) => rs.map((r) => (r._id === id ? { ...r, ...patch } : r)));
   const setTier = (r: P, qty: number, price: number) => {
     const exists = r.bulkTiers.some((t) => t.minQty === qty);
-    const tiers = exists ? r.bulkTiers.map((t) => (t.minQty === qty ? { ...t, price } : t)) : [...r.bulkTiers, { minQty: qty, price, label: `OVER ${qty} MAGNETS` }];
+    const tiers = exists ? r.bulkTiers.map((t) => (t.minQty === qty ? { ...t, price } : t)) : [...r.bulkTiers, { minQty: qty, price, label: `${qty}+ MAGNETS` }];
     update(r._id, { bulkTiers: tiers });
   };
 

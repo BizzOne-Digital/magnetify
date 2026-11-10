@@ -35,6 +35,7 @@ export const IMG = {
   team: unsplash("photo-1517245386807-bb43f82c33c4"),
   friends: unsplash("photo-1522673607200-164d1b6ce486"),
   pet: unsplash("photo-1583337130417-3346a1be7dee"),
+  packing: unsplash("photo-1449247666642-264389f5f5b1"),
 };
 
 const featureItem: FieldDef[] = [
@@ -179,6 +180,37 @@ export const PAGE_DEFS: PageDef[] = [
   },
 ];
 
+PAGE_DEFS.push(
+  { key: "shipping-info", title: "Shipping Page", description: "Content for /shipping. Rates and provinces come from Admin > Shipping.", fields: [
+      { name: "heroTitle", label: "Page title", type: "text" },
+      { name: "intro", label: "Introduction", type: "textarea" },
+      {
+        name: "sections",
+        label: "Sections",
+        type: "list",
+        itemLabel: "Section",
+        fields: [
+          { name: "title", label: "Heading", type: "text" },
+          { name: "text", label: "Text (blank line = new paragraph)", type: "textarea" },
+        ],
+      },
+    ] },
+  { key: "privacy", title: "Privacy Policy", description: "Content for /privacy-policy.", fields: [
+      { name: "heroTitle", label: "Page title", type: "text" },
+      { name: "intro", label: "Introduction", type: "textarea" },
+      {
+        name: "sections",
+        label: "Sections",
+        type: "list",
+        itemLabel: "Section",
+        fields: [
+          { name: "title", label: "Heading", type: "text" },
+          { name: "text", label: "Text (blank line = new paragraph)", type: "textarea" },
+        ],
+      },
+    ] }
+);
+
 export const DEFAULT_CONTENT: Record<string, Record<string, unknown>> = {
   home: {
     heroEyebrow: "CUSTOM MEMORIES MADE SIMPLE",
@@ -249,22 +281,22 @@ export const DEFAULT_CONTENT: Record<string, Record<string, unknown>> = {
     sections: [
       {
         title: "Our Story",
-        text: "Magnetify started with a simple idea: the best photos should not stay buried in a phone. We built an easy way to turn them into something you can hold, display and share.",
+        text: "Magnetify started with a simple idea: the best photos should not stay buried in a phone. We created a simple way to turn them into something you can hold, display and share.",
         image: IMG.prints,
       },
       {
         title: "Why Magnetify",
         text: "Simple ordering from any device, honest pricing, bulk discounts and careful printing on every order. No design skills needed.",
-        image: IMG.friends,
+        image: IMG.wedding,
       },
       {
         title: "Personalized Memories",
-        text: "Family portraits, first dates, new puppies, graduations and trips — every magnet is printed from your own photo and finished with your own text.",
+        text: "Family portraits, weddings, babies' first moments, beloved pets, and special trips. Every magnet is printed from your own photos and personalized with your own text.",
         image: IMG.family,
       },
       {
         title: "Business Magnets",
-        text: "Put your logo, business card or promotion on your customers' fridges. Great for real estate, cafés, clinics, trades and events.",
+        text: "Put your logo, business card or promotional message on your customers' fridges. Great for real estate, cafés, clinics, trades and events.",
         image: IMG.cafe,
       },
       {
@@ -275,7 +307,7 @@ export const DEFAULT_CONTENT: Record<string, Record<string, unknown>> = {
       {
         title: "Quality & Care",
         text: "We check every order before printing, use vivid long-lasting prints and pack each set carefully so it arrives ready to display.",
-        image: IMG.wedding,
+        image: IMG.packing,
       },
     ],
   },
@@ -287,11 +319,34 @@ export const DEFAULT_CONTENT: Record<string, Record<string, unknown>> = {
   },
   pricing: {
     heroTitle: "Simple, Honest Pricing",
-    heroText: "Grand opening sale pricing on every magnet, plus automatic bulk discounts when you order more.",
+    heroText: "Enjoy our Grand opening sale prices on every magnet, plus additional savings when you order more.",
     faqs: [
       { q: "How do bulk discounts work?", a: "Bulk pricing applies automatically to your whole cart once you reach the total number of magnets shown." },
       { q: "Is there a minimum order?", a: "Yes. 2x2 magnets have a minimum of 9 and 2x3 magnets have a minimum of 6 per design set." },
       { q: "Can I return custom magnets?", a: "Custom magnets are made just for you, so they are final sale and non-refundable." },
+    ],
+  },
+  "shipping-info": {
+    heroTitle: "Shipping Information",
+    intro: "We are currently shipping within British Columbia (BC) only. We are working on expanding to more provinces soon.",
+    sections: [
+      { title: "Where we ship", text: "Orders can currently be delivered to addresses in British Columbia only. If you are outside BC, please contact us and we will let you know as soon as we ship to your area." },
+      { title: "Processing time", text: "Every custom magnet is made to order. Once your payment is confirmed, we review your photos, print and pack your order carefully. We will email you when your order ships." },
+      { title: "Shipping costs", text: "A flat shipping rate applies to every order, and orders of $100 or more ship free. The exact amount is shown in your cart and at checkout before you pay." },
+      { title: "Damaged or lost orders", text: "If your order arrives damaged or does not arrive, please email us with your order number and a photo of the package so we can make it right." },
+    ],
+  },
+  privacy: {
+    heroTitle: "Privacy Policy",
+    intro: "Magnetify respects your privacy. This policy explains what personal information we collect when you visit our website or place an order, how we use it, and the choices you have.",
+    sections: [
+      { title: "Information we collect", text: "When you place an order we collect your name, email address, shipping address and, if you choose to provide it, your phone number. We also receive the photos and text you upload to create your magnets.\n\nWhen you contact us we collect your name, email address and message." },
+      { title: "How we use your information", text: "We use your information to make, ship and support your order, to reply to your messages and to send you updates about your order. We do not sell or rent your personal information." },
+      { title: "Your photos", text: "Photos you upload are used only to produce your magnets. We will only feature your order on our social media if you agreed to this at checkout. You can change your mind at any time by emailing us." },
+      { title: "Payments", text: "Payments are processed securely by our payment providers (such as Stripe and PayPal). We never see or store your full card details." },
+      { title: "How long we keep information", text: "We keep order information as long as needed to complete your order and meet our legal and accounting obligations. You can ask us to delete your uploaded photos once your order is complete." },
+      { title: "Your rights", text: "You can ask to see, correct or delete the personal information we hold about you by emailing us. We will respond within a reasonable time." },
+      { title: "Contact us", text: "If you have any questions about this policy or your personal information, please email magnetify1@hotmail.com." },
     ],
   },
   shop: {
@@ -319,8 +374,8 @@ export const DEFAULT_PRODUCTS = [
     gallery: [],
     status: "active" as const,
     bulkTiers: [
-      { minQty: 50, price: 4.49, label: "OVER 50 MAGNETS" },
-      { minQty: 100, price: 3.99, label: "OVER 100 MAGNETS" },
+      { minQty: 50, price: 4.49, label: "50+ MAGNETS" },
+      { minQty: 100, price: 3.99, label: "100+ MAGNETS" },
     ],
     sortOrder: 1,
   },
@@ -338,8 +393,8 @@ export const DEFAULT_PRODUCTS = [
     gallery: [],
     status: "active" as const,
     bulkTiers: [
-      { minQty: 50, price: 5.49, label: "OVER 50 MAGNETS" },
-      { minQty: 100, price: 4.99, label: "OVER 100 MAGNETS" },
+      { minQty: 50, price: 5.49, label: "50+ MAGNETS" },
+      { minQty: 100, price: 4.99, label: "100+ MAGNETS" },
     ],
     sortOrder: 2,
   },
@@ -357,8 +412,8 @@ export const DEFAULT_PRODUCTS = [
     gallery: [],
     status: "active" as const,
     bulkTiers: [
-      { minQty: 50, price: 4.49, label: "OVER 50 MAGNETS" },
-      { minQty: 100, price: 3.99, label: "OVER 100 MAGNETS" },
+      { minQty: 50, price: 4.49, label: "50+ MAGNETS" },
+      { minQty: 100, price: 3.99, label: "100+ MAGNETS" },
     ],
     sortOrder: 3,
   },
@@ -376,8 +431,8 @@ export const DEFAULT_PRODUCTS = [
     gallery: [],
     status: "active" as const,
     bulkTiers: [
-      { minQty: 50, price: 5.49, label: "OVER 50 MAGNETS" },
-      { minQty: 100, price: 4.99, label: "OVER 100 MAGNETS" },
+      { minQty: 50, price: 5.49, label: "50+ MAGNETS" },
+      { minQty: 100, price: 4.99, label: "100+ MAGNETS" },
     ],
     sortOrder: 4,
   },
@@ -387,6 +442,7 @@ export const DEFAULT_SITE = {
   contactEmail: "magnetify1@hotmail.com",
   facebookHandle: "shop.magnetify",
   instagramHandle: "shop.magnetify",
+  tiktokHandle: "Magnetify1",
   finalSaleNotice: "Custom magnets are final sale and non-refundable.",
   announcement: "",
 };

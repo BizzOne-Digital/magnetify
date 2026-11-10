@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { Logo } from "@/components/site/Logo";
-import { FacebookIcon, InstagramIcon } from "@/components/icons/BrandIcons";
+import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/icons/BrandIcons";
 import { getSiteSettings } from "@/lib/data";
 
 const LINKS = [
@@ -10,6 +10,8 @@ const LINKS = [
   { href: "/products", label: "Products" },
   { href: "/pricing", label: "Pricing" },
   { href: "/contact", label: "Contact" },
+  { href: "/shipping", label: "Shipping" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
 ];
 
 export async function Footer() {
@@ -18,8 +20,8 @@ export async function Footer() {
     <footer className="mt-auto border-t border-gold/40 bg-[#070707]">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_1fr_1.3fr] md:items-start">
         <div className="space-y-4">
-          <Link href="/" aria-label="Magnetify home">
-            <Logo />
+          <Link href="/" aria-label="Magnetify home" className="inline-block">
+            <Logo className="h-12 sm:h-14" />
           </Link>
           <p className="max-w-xs text-sm text-muted">Small magnets, big memories. Personalized photo magnets made in Canada.</p>
           <a href={`mailto:${s.contactEmail}`} className="inline-flex items-center gap-2 text-sm text-gold-light hover:underline">
@@ -69,6 +71,21 @@ export async function Footer() {
                 </span>
               </a>
             </li>
+            {s.tiktokHandle ? (
+              <li>
+                <a
+                  href={`https://www.tiktok.com/@${s.tiktokHandle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 text-cream/90 hover:text-gold-light"
+                >
+                  <TikTokIcon className="h-7 w-7" />
+                  <span>
+                    TikTok: <strong className="text-cream">{s.tiktokHandle}</strong>
+                  </span>
+                </a>
+              </li>
+            ) : null}
           </ul>
         </div>
       </div>

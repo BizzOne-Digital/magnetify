@@ -73,6 +73,7 @@ export const getSiteSettings = cache(async () => {
       contactEmail: doc?.contactEmail || DEFAULT_SITE.contactEmail,
       facebookHandle: doc?.facebookHandle || DEFAULT_SITE.facebookHandle,
       instagramHandle: doc?.instagramHandle || DEFAULT_SITE.instagramHandle,
+      tiktokHandle: doc?.tiktokHandle || DEFAULT_SITE.tiktokHandle,
       finalSaleNotice: doc?.finalSaleNotice || DEFAULT_SITE.finalSaleNotice,
       announcement: doc?.announcement ?? "",
     };
@@ -91,6 +92,8 @@ export const getShippingConfig = cache(async (): Promise<ShippingConfig> => {
       localPickupEnabled: doc.localPickupEnabled,
       localPickupNote: doc.localPickupNote ?? "",
       zones: (doc.zones ?? []).map((z) => ({ name: z.name, provinces: z.provinces, rate: z.rate })),
+      allowedProvinces: doc.allowedProvinces ?? DEFAULT_SHIPPING.allowedProvinces,
+      shippingNotice: doc.shippingNotice ?? DEFAULT_SHIPPING.shippingNotice,
     };
   }, DEFAULT_SHIPPING);
 });

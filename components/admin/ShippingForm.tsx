@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Save, X } from "lucide-react";
 import { adminFetch } from "@/components/admin/adminFetch";
-import type { ShippingConfig } from "@/lib/shipping";
+import { PROVINCE_NAMES, type ShippingConfig } from "@/lib/shipping";
 
 export function ShippingForm({ initial }: { initial: ShippingConfig }) {
   const router = useRouter();
@@ -70,6 +70,34 @@ export function ShippingForm({ initial }: { initial: ShippingConfig }) {
             Pickup note shown at checkout
           </label>
           <input id="s-note" className="input" value={v.localPickupNote} onChange={(e) => set("localPickupNote", e.target.value)} placeholder="e.g. Pickup in Mississauga, details by email" />
+        </div>
+      </section>
+
+      <section className="card-dark space-y-4 p-5">
+        <div>
+          <h2 className="font-display font-bold text-gold-light">Where we ship</h2>
+          <p className="text-xs text-muted">Customers can only check out with these provinces. Untick all to ship Canada-wide.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {Object.entries(PROVINCE_NAMES).map(([code, name]) => (
+            <label key={code} className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#D4AF37]"
+                checked={v.allowedProvinces.includes(code)}
+                onChange={(e) =>
+                  set("allowedProvinces", e.target.checked ? [...v.allowedProvinces, code] : v.allowedProvinces.filter((p) => p !== code))
+                }
+              />
+              {name}
+            </label>
+          ))}
+        </div>
+        <div>
+          <label htmlFor="s-notice" className="label">
+            Shipping notice shown on the website
+          </label>
+          <input id="s-notice" className="input" value={v.shippingNotice} onChange={(e) => set("shippingNotice", e.target.value)} placeholder="Currently shipping within BC only" />
         </div>
       </section>
 

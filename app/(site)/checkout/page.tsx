@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getProducts, getShippingConfig, getSiteSettings, toPricedProducts } from "@/lib/data";
-import { isStripeConfigured } from "@/lib/payments";
+import { isPayPalConfigured, isStripeConfigured } from "@/lib/payments";
 import { CheckoutForm } from "@/components/cart/CheckoutForm";
 import { SectionHeading } from "@/components/site/ui";
 
@@ -18,6 +18,11 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14">
       <SectionHeading as="h1" title="Checkout" className="mb-8" />
+      {sp.payment_failed ? (
+        <p className="mb-6 rounded-xl border border-promo/60 bg-promo/10 p-4 text-sm text-cream">
+          Your payment was not completed. Your order is saved as unpaid — please try again or contact us for help.
+        </p>
+      ) : null}
       {sp.cancelled ? (
         <p className="mb-6 rounded-xl border border-promo/60 bg-promo/10 p-4 text-sm text-cream">
           Payment was cancelled. Your order has been saved as unpaid — you can try again below or contact us for help.
@@ -27,6 +32,7 @@ export default async function CheckoutPage({ searchParams }: PageProps<"/checkou
         products={toPricedProducts(products)}
         shipping={shipping}
         stripeEnabled={isStripeConfigured()}
+        paypalEnabled={isPayPalConfigured()}
         finalSaleNotice={site.finalSaleNotice}
       />
     </div>

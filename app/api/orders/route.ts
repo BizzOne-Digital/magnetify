@@ -8,7 +8,9 @@ import { orderSchema } from "@/lib/validation";
 import { getProducts, getShippingConfig, toPricedProducts } from "@/lib/data";
 import { calculatePricing, round2 } from "@/lib/pricing";
 import { quoteShipping } from "@/lib/shipping";
-import { createStripeCheckoutSession, isStripeConfigured } from "@/lib/payments";
+import { createPayPalOrder, createStripeCheckoutSession, isPayPalConfigured, isStripeConfigured } from "@/lib/payments";
+import { after } from "next/server";
+import { sendOrderEmails } from "@/lib/orderEmails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,12 +48,24 @@ export async function POST(req: Request) {
       },
       shippingConfig
     );
-    if (!ship.available) return fail("The selected delivery option is not available.", 422);
+    if (!ship.available) return fail(ship.label || "The selected delivery option is not available.", 422);
 
     // Every artwork reference must exist in the private orders folder.
     const filenames = input.items.flatMap((i) => i.tiles.map((t) => t.printUrl.split("/").pop()!));
     const found = await StoredUpload.countDocuments({ folder: "orders", filename: { $in: filenames.map(String) } });
     if (found !== new Set(filenames).size) return fail("Some magnet images did not upload correctly. Please try again.", 422);
+
+    // Payment provider: the customer's choice if that provider is configured.
+    const stripeOn = isStripeConfigured();
+    const paypalOn = isPayPalConfigured();
+    let provider: "stripe" | "paypal" | "manual" = "manual";
+    if (input.paymentMethod === "paypal" && paypalOn) provider = "paypal";
+    else if (input.paymentMethod === "card" && stripeOn) provider = "stripe";
+    else if (!input.paymentMethod && stripeOn) provider = "stripe";
+    else if (!input.paymentMethod && paypalOn) provider = "paypal";
+    else if (input.paymentMethod && input.paymentMethod !== "manual" && (stripeOn || paypalOn)) {
+      return fail("That payment method is not available. Please choose another.", 422);
+    }
 
     const number = orderNumber();
     const order = new Order({
@@ -72,7 +86,7 @@ export async function POST(req: Request) {
       notes: input.notes || undefined,
       status: "pending",
       paymentStatus: "awaiting_payment",
-      paymentProvider: isStripeConfigured() ? "stripe" : "manual",
+      paymentProvider: provider,
     });
 
     const customizations = input.items.map(
@@ -102,26 +116,30 @@ export async function POST(req: Request) {
       status: "converted",
     });
 
-    if (isStripeConfigured()) {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
-      try {
-        const session = await createStripeCheckoutSession({
-          orderId: String(order._id),
-          orderNumber: number,
-          email: input.customer.email,
-          lines: pricing.lines.map((l) => ({ name: `${l.name} (${l.size})`, unitAmount: l.unitPrice, quantity: l.quantity })),
-          shipping: ship.amount,
-          siteUrl,
-        });
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+    const lines = pricing.lines.map((l) => ({ name: `${l.name} (${l.size})`, unitAmount: l.unitPrice, quantity: l.quantity }));
+    try {
+      if (provider === "stripe") {
+        const session = await createStripeCheckoutSession({ orderId: String(order._id), orderNumber: number, email: input.customer.email, lines, shipping: ship.amount, siteUrl });
         order.paymentRef = session.id;
         await order.save();
         return ok({ orderNumber: number, checkoutUrl: session.url }, 201);
-      } catch (err) {
-        console.error("[orders] stripe session failed", err);
-        return ok({ orderNumber: number, checkoutUrl: null, paymentError: "Card payment is unavailable right now; we will email you a payment link." }, 201);
       }
+      if (provider === "paypal") {
+        const pp = await createPayPalOrder({ orderId: String(order._id), orderNumber: number, lines, shipping: ship.amount, total: order.totals.total, siteUrl });
+        order.paymentRef = pp.id;
+        await order.save();
+        return ok({ orderNumber: number, checkoutUrl: pp.url }, 201);
+      }
+    } catch (err) {
+      console.error(`[orders] ${provider} start failed`, err);
+      order.paymentProvider = "manual";
+      await order.save();
+      after(() => sendOrderEmails(String(order._id), "Online payment could not be started, so we will email you a secure payment request shortly.", siteUrl));
+      return ok({ orderNumber: number, checkoutUrl: null, paymentError: "Online payment is unavailable right now; we will email you a payment request." }, 201);
     }
 
+    after(() => sendOrderEmails(String(order._id), "We will email you a secure payment request shortly. Your magnets go to print once payment is received.", siteUrl));
     return ok({ orderNumber: number, checkoutUrl: null }, 201);
   } catch (err) {
     return handleError(err);

@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Order Received", robots: { index: fa
 export default async function SuccessPage({ searchParams }: PageProps<"/checkout/success">) {
   const sp = await searchParams;
   const order = typeof sp.order === "string" ? sp.order.replace(/[^A-Z0-9-]/gi, "").slice(0, 30) : "";
-  const paidViaStripe = typeof sp.session_id === "string";
+  const paidOnline = typeof sp.session_id === "string" || sp.paid === "1";
   const site = await getSiteSettings();
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6">
@@ -23,7 +23,7 @@ export default async function SuccessPage({ searchParams }: PageProps<"/checkout
           </p>
         ) : null}
         <p className="mt-4 text-cream/80">
-          {paidViaStripe
+          {paidOnline
             ? "Your payment is being confirmed. We will email you once your magnets go to print."
             : "We have received your order and will email you a secure payment request shortly. Your magnets go to print once payment is received."}
         </p>

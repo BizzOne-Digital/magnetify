@@ -6,7 +6,7 @@ export function AboutStrip({ title, text }: { title: string; text: string }) {
   return (
     <section className="mx-auto grid max-w-7xl gap-6 px-4 pt-14 sm:px-6 lg:grid-cols-[1.25fr_1fr]" aria-label="About Magnetify">
       <div className="card-gold flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-start sm:p-8">
-        <LogoMark className="h-24 w-28 shrink-0" />
+        <LogoMark className="h-24 shrink-0 sm:h-28" title="Magnetify" />
         <span className="hidden h-28 w-px bg-gold/40 sm:block" aria-hidden="true" />
         <div className="text-center sm:text-left">
           <h2 className="section-title text-gold-metal text-2xl sm:text-3xl">{title}</h2>

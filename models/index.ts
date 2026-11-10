@@ -167,7 +167,7 @@ export interface OrderDoc {
   notes?: string;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
-  paymentProvider: "stripe" | "manual";
+  paymentProvider: "stripe" | "paypal" | "manual";
   paymentRef?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -207,7 +207,7 @@ const OrderSchema = new Schema(
       enum: ["unpaid", "awaiting_payment", "paid", "failed", "refunded"],
       default: "unpaid",
     },
-    paymentProvider: { type: String, enum: ["stripe", "manual"], default: "manual" },
+    paymentProvider: { type: String, enum: ["stripe", "paypal", "manual"], default: "manual" },
     paymentRef: String,
   },
   { timestamps: true }
@@ -259,6 +259,7 @@ export interface SiteSettingsDoc {
   contactEmail: string;
   facebookHandle: string;
   instagramHandle: string;
+  tiktokHandle: string;
   bulkTiers: { minQty: number; label: string }[];
   finalSaleNotice: string;
   announcement: string;
@@ -269,6 +270,7 @@ const SiteSettingsSchema = new Schema(
     contactEmail: { type: String, default: "magnetify1@hotmail.com" },
     facebookHandle: { type: String, default: "shop.magnetify" },
     instagramHandle: { type: String, default: "shop.magnetify" },
+    tiktokHandle: { type: String, default: "Magnetify1" },
     bulkTiers: { type: [{ minQty: Number, label: String, _id: false }], default: undefined },
     finalSaleNotice: { type: String, default: "Custom magnets are final sale and non-refundable." },
     announcement: { type: String, default: "" },
@@ -288,6 +290,8 @@ export interface ShippingSettingsDoc {
   localPickupEnabled: boolean;
   localPickupNote: string;
   zones: { name: string; provinces: string[]; rate: number }[];
+  allowedProvinces: string[];
+  shippingNotice: string;
 }
 const ShippingSettingsSchema = new Schema(
   {
@@ -295,10 +299,12 @@ const ShippingSettingsSchema = new Schema(
     shippingEnabled: { type: Boolean, default: true },
     mode: { type: String, enum: ["flat", "zone"], default: "flat" },
     flatShippingRate: { type: Number, default: 4.99, min: 0 },
-    freeShippingThreshold: { type: Number, default: 75, min: 0 },
+    freeShippingThreshold: { type: Number, default: 100, min: 0 },
     localPickupEnabled: { type: Boolean, default: false },
     localPickupNote: { type: String, default: "" },
     zones: { type: [{ name: String, provinces: [String], rate: Number, _id: false }], default: [] },
+    allowedProvinces: { type: [String], default: ["BC"] },
+    shippingNotice: { type: String, default: "Currently shipping within BC only" },
   },
   { timestamps: true }
 );

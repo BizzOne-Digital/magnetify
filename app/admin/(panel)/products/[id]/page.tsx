@@ -20,8 +20,8 @@ const EMPTY: ProductFormValues = {
   gallery: [],
   status: "draft",
   bulkTiers: [
-    { minQty: 50, price: 4.49, label: "OVER 50 MAGNETS" },
-    { minQty: 100, price: 3.99, label: "OVER 100 MAGNETS" },
+    { minQty: 50, price: 4.49, label: "50+ MAGNETS" },
+    { minQty: 100, price: 3.99, label: "100+ MAGNETS" },
   ],
   sortOrder: 10,
 };

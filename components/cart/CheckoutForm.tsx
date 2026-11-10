@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CreditCard, Lock, Mail, Package, Store, Truck } from "lucide-react";
+import { CreditCard, Lock, Mail, Package, Store, Truck, Wallet } from "lucide-react";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCartPricing } from "@/components/cart/CartView";
 import { TileView } from "@/components/customizer/TileView";
 import { renderTile } from "@/lib/cart/render";
 import { FRAME_RATIO, filledTiles, type TileState } from "@/lib/cart/types";
 import { money, type PricedProduct } from "@/lib/pricing";
-import { quoteShipping, type ShippingConfig } from "@/lib/shipping";
+import { PROVINCE_NAMES, freeShippingText, quoteShipping, shipsTo, type ShippingConfig } from "@/lib/shipping";
 
-const PROVINCES = ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"];
+const PROVINCES = Object.keys(PROVINCE_NAMES);
 
 type FieldErrors = Record<string, string>;
 
@@ -38,19 +38,24 @@ export function CheckoutForm({
   products,
   shipping,
   stripeEnabled,
+  paypalEnabled,
   finalSaleNotice,
 }: {
   products: PricedProduct[];
   shipping: ShippingConfig;
   stripeEnabled: boolean;
+  paypalEnabled: boolean;
   finalSaleNotice: string;
 }) {
   const router = useRouter();
   const { items, ready, clear } = useCart();
   const pricing = useCartPricing(products);
   const [fulfillment, setFulfillment] = useState<"shipping" | "pickup">(shipping.shippingEnabled ? "shipping" : "pickup");
-  const [province, setProvince] = useState("");
+  const provinceOptions = shipping.allowedProvinces.length ? PROVINCES.filter((p) => shipping.allowedProvinces.includes(p)) : PROVINCES;
+  const [province, setProvince] = useState(provinceOptions.length === 1 ? provinceOptions[0] : "");
   const [consent, setConsent] = useState<"" | "agree" | "disagree">("");
+  const onlinePayment = stripeEnabled || paypalEnabled;
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "paypal" | "manual">(stripeEnabled ? "card" : paypalEnabled ? "paypal" : "manual");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -82,6 +87,7 @@ export function CheckoutForm({
       if (get("line1").length < 3) errs.line1 = "Street address is required";
       if (get("city").length < 2) errs.city = "City is required";
       if (!get("province")) errs.province = "Province is required";
+      else if (!shipsTo(shipping, get("province"))) errs.province = shipping.shippingNotice || "We do not ship to this province yet";
       if (!/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(get("postalCode"))) errs.postalCode = "Enter a valid Canadian postal code";
     }
     if (!consent) errs.consent = "Please choose one social media consent option";
@@ -142,6 +148,7 @@ export function CheckoutForm({
           })),
         })),
         socialConsent: consent,
+        paymentMethod,
         notes: get("notes"),
       };
       const res = await fetch("/api/orders", {
@@ -152,8 +159,9 @@ export function CheckoutForm({
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "We could not place your order. Please try again.");
 
+      if (json.paymentError) toast.message(json.paymentError);
       if (json.checkoutUrl) {
-        toast.success("Redirecting to secure payment…");
+        toast.success(paymentMethod === "paypal" ? "Redirecting to PayPal…" : "Redirecting to secure card payment…");
         window.location.href = json.checkoutUrl as string;
         return;
       }
@@ -210,9 +218,9 @@ export function CheckoutForm({
               <ChoiceCard checked={fulfillment === "shipping"} onSelect={() => setFulfillment("shipping")} name="fulfillment" value="shipping" icon={<Truck className="h-5 w-5" />}>
                 Ship to me
                 <span className="block text-xs font-normal text-muted">
-                  {money(shipping.flatShippingRate)} flat
-                  {shipping.freeShippingThreshold > 0 ? ` · free over ${money(shipping.freeShippingThreshold)}` : ""}
+                  {money(shipping.flatShippingRate)} flat{freeShippingText(shipping) ? ` · ${freeShippingText(shipping).toLowerCase()}` : ""}
                 </span>
+                {shipping.shippingNotice ? <span className="mt-1 block text-xs font-semibold text-champagne">{shipping.shippingNotice}</span> : null}
               </ChoiceCard>
             ) : null}
             {shipping.localPickupEnabled ? (
@@ -244,9 +252,9 @@ export function CheckoutForm({
                   autoComplete="address-level1"
                 >
                   <option value="">Select…</option>
-                  {PROVINCES.map((p) => (
+                  {provinceOptions.map((p) => (
                     <option key={p} value={p}>
-                      {p}
+                      {PROVINCE_NAMES[p]} ({p})
                     </option>
                   ))}
                 </select>
@@ -288,11 +296,22 @@ export function CheckoutForm({
 
         <section className="card-gold space-y-3 p-5 sm:p-6" aria-label="Payment">
           <h2 className="section-title text-gold-metal text-xl">4. Payment</h2>
-          {stripeEnabled ? (
-            <p className="flex items-start gap-3 text-cream/85">
-              <CreditCard className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
-              After you place your order you will be redirected to our secure Stripe checkout to pay by card.
-            </p>
+          {onlinePayment ? (
+            <div className="space-y-2" role="radiogroup" aria-label="Payment method">
+              {stripeEnabled ? (
+                <ChoiceCard checked={paymentMethod === "card"} onSelect={() => setPaymentMethod("card")} name="paymentMethod" value="card" icon={<CreditCard className="h-5 w-5" />}>
+                  Credit / Debit card
+                  <span className="block text-xs font-normal text-muted">Visa, Mastercard, Amex and more — secure checkout by Stripe</span>
+                </ChoiceCard>
+              ) : null}
+              {paypalEnabled ? (
+                <ChoiceCard checked={paymentMethod === "paypal"} onSelect={() => setPaymentMethod("paypal")} name="paymentMethod" value="paypal" icon={<Wallet className="h-5 w-5" />}>
+                  PayPal
+                  <span className="block text-xs font-normal text-muted">Pay with your PayPal balance, bank or card through PayPal</span>
+                </ChoiceCard>
+              ) : null}
+              <p className="text-xs text-muted">After you place your order you will be taken to the secure payment page to complete payment.</p>
+            </div>
           ) : (
             <p className="flex items-start gap-3 text-cream/85">
               <Mail className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden="true" />
@@ -343,6 +362,11 @@ export function CheckoutForm({
             <dt className="text-cream/80">{ship.label}</dt>
             <dd>{ship.available ? (ship.amount ? money(ship.amount) : "Free") : "—"}</dd>
           </div>
+          {ship.available && ship.freeShippingRemaining !== null && ship.freeShippingRemaining > 0 ? (
+            <p className="rounded-lg bg-gold/10 px-3 py-2 text-xs text-gold-light">
+              Add {money(ship.freeShippingRemaining)} more for free shipping ({freeShippingText(shipping).toLowerCase()}).
+            </p>
+          ) : null}
           <div className="flex items-baseline justify-between pt-2">
             <dt className="font-display font-bold text-cream">Total (CAD)</dt>
             <dd className="font-display text-2xl font-extrabold text-gold-light">{money(total)}</dd>
@@ -355,9 +379,11 @@ export function CheckoutForm({
             ? progress && progress.done < progress.total
               ? `Preparing magnets ${progress.done}/${progress.total}…`
               : "Placing order…"
-            : stripeEnabled
-              ? "Place Order & Pay"
-              : "Place Order"}
+            : paymentMethod === "paypal"
+              ? "Place Order & Pay with PayPal"
+              : paymentMethod === "card"
+                ? "Place Order & Pay by Card"
+                : "Place Order"}
         </button>
         {progress ? (
           <div className="h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">

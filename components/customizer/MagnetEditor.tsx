@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { Move, RefreshCw, RotateCcw, Trash2, Type, ZoomIn, ZoomOut } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ImageIcon, Move, RefreshCw, RotateCcw, Trash2, Type, ZoomIn, ZoomOut } from "lucide-react";
 import { usePhotoUrl } from "@/components/customizer/TileView";
 import { clampOffset, imageStyle } from "@/lib/cart/geometry";
 import { TEXT_COLORS, type TileState } from "@/lib/cart/types";
@@ -26,7 +26,18 @@ export function MagnetEditor({
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const gesture = useRef<{ mode: "image" | "text"; startDist?: number; startScale?: number } | null>(null);
+  type Gesture = {
+    mode: "image" | "text";
+    startX: number;
+    startY: number;
+    tileX: number;
+    tileY: number;
+    startDist?: number;
+    startScale?: number;
+  };
+  const gesture = useRef<Gesture | null>(null);
+  /** What a drag on the magnet moves. Text mode lets the customer place text anywhere. */
+  const [dragTarget, setDragTarget] = useState<"photo" | "text">("photo");
   const { url } = usePhotoUrl(tile?.imageKey ?? null);
 
   if (!tile || !tile.imageKey) {
@@ -45,51 +56,78 @@ export function MagnetEditor({
 
   const rect = () => frameRef.current!.getBoundingClientRect();
 
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const textMode = dragTarget === "text" && Boolean(tile.text);
+
+  /** Put the text centre exactly under the pointer. */
+  const placeTextAt = (clientX: number, clientY: number) => {
+    const r = rect();
+    onChange({
+      textX: clamp((clientX - r.left) / r.width, 0.02, 0.98),
+      textY: clamp((clientY - r.top) / r.height, 0.03, 0.97),
+    });
+  };
+
   const onPointerDown = (e: React.PointerEvent<HTMLElement>) => {
-    const mode = e.currentTarget.dataset.mode === "text" ? "text" : "image";
+    const mode = e.currentTarget.dataset.mode === "text" || textMode ? "text" : "image";
     e.stopPropagation();
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    e.preventDefault();
+    frameRef.current?.setPointerCapture(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.current.size === 2 && mode === "image") {
+    if (mode === "text") {
+      gesture.current = { mode, startX: e.clientX, startY: e.clientY, tileX: tile.x, tileY: tile.y };
+      placeTextAt(e.clientX, e.clientY);
+      return;
+    }
+    if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()];
-      gesture.current = { mode, startDist: Math.hypot(a.x - b.x, a.y - b.y), startScale: tile.scale };
+      gesture.current = { mode, startX: 0, startY: 0, tileX: tile.x, tileY: tile.y, startDist: Math.hypot(a.x - b.x, a.y - b.y), startScale: tile.scale };
     } else {
-      gesture.current = { mode };
+      gesture.current = { mode, startX: e.clientX, startY: e.clientY, tileX: tile.x, tileY: tile.y };
     }
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
-    const prev = pointers.current.get(e.pointerId);
-    if (!prev || !gesture.current) return;
+    if (!pointers.current.has(e.pointerId) || !gesture.current) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    const r = rect();
-    if (gesture.current.mode === "image" && pointers.current.size === 2 && gesture.current.startDist) {
-      const [a, b] = [...pointers.current.values()];
-      const dist = Math.hypot(a.x - b.x, a.y - b.y);
-      const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, (gesture.current.startScale ?? 1) * (dist / gesture.current.startDist)));
-      apply({ scale });
+    const g = gesture.current;
+    if (g.mode === "text") {
+      placeTextAt(e.clientX, e.clientY);
       return;
     }
-    const dx = (e.clientX - prev.x) / r.width;
-    const dy = (e.clientY - prev.y) / r.height;
-    if (gesture.current.mode === "image") {
-      apply({ x: tile.x + dx, y: tile.y + dy });
-    } else {
-      onChange({
-        textX: Math.min(0.95, Math.max(0.05, tile.textX + dx)),
-        textY: Math.min(0.95, Math.max(0.05, tile.textY + dy)),
-      });
+    if (pointers.current.size === 2 && g.startDist) {
+      const [a, b] = [...pointers.current.values()];
+      const dist = Math.hypot(a.x - b.x, a.y - b.y);
+      apply({ scale: clamp((g.startScale ?? 1) * (dist / g.startDist), MIN_SCALE, MAX_SCALE) });
+      return;
     }
+    const r = rect();
+    // Offsets are measured from where the drag started, so fast moves never drift or stick.
+    apply({ x: g.tileX + (e.clientX - g.startX) / r.width, y: g.tileY + (e.clientY - g.startY) / r.height });
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
     pointers.current.delete(e.pointerId);
-    if (pointers.current.size === 0) gesture.current = null;
-    else if (gesture.current) gesture.current = { mode: gesture.current.mode };
+    if (pointers.current.size === 0) {
+      gesture.current = null;
+    } else if (gesture.current) {
+      // Pinch ended with one finger still down: continue dragging from here.
+      const [rest] = [...pointers.current.values()];
+      gesture.current = { mode: gesture.current.mode, startX: rest.x, startY: rest.y, tileX: tile.x, tileY: tile.y };
+    }
   };
+
+  const nudgeText = (dx: number, dy: number) =>
+    onChange({ textX: clamp(tile.textX + dx, 0.02, 0.98), textY: clamp(tile.textY + dy, 0.03, 0.97) });
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     const step = e.shiftKey ? 0.05 : 0.01;
+    if (textMode && e.key.startsWith("Arrow")) {
+      e.preventDefault();
+      const d: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+      nudgeText(...d[e.key]);
+      return;
+    }
     const map: Record<string, Partial<TileState>> = {
       ArrowLeft: { x: tile.x - step },
       ArrowRight: { x: tile.x + step },
@@ -120,7 +158,9 @@ export function MagnetEditor({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onWheel={(e) => apply({ scale: Math.min(MAX_SCALE, Math.max(MIN_SCALE, tile.scale - e.deltaY * 0.0015)) })}
-          className="relative cursor-grab touch-none select-none overflow-hidden rounded-lg border-2 border-gold/80 bg-black shadow-[0_0_24px_rgba(212,175,55,0.2)] active:cursor-grabbing"
+          className={`relative touch-none select-none overflow-hidden rounded-lg border-2 bg-black shadow-[0_0_24px_rgba(212,175,55,0.2)] ${
+            textMode ? "cursor-crosshair border-promo" : "cursor-grab border-gold/80 active:cursor-grabbing"
+          }`}
           style={{ aspectRatio: `1 / ${ratio}`, containerType: "inline-size" }}
         >
           {url ? (
@@ -131,15 +171,19 @@ export function MagnetEditor({
           {["left-0 top-0", "right-0 top-0", "left-0 bottom-0", "right-0 bottom-0"].map((p) => (
             <span key={p} className={`pointer-events-none absolute ${p} m-1 h-2.5 w-2.5 rounded-full border border-ink bg-cream`} aria-hidden="true" />
           ))}
-          <Move className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-cream/80 drop-shadow" aria-hidden="true" />
+          {!textMode ? (
+            <Move className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 text-cream/80 drop-shadow" aria-hidden="true" />
+          ) : null}
           {tile.text ? (
             <span
               data-mode="text"
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-              className="absolute -translate-x-1/2 -translate-y-1/2 cursor-move whitespace-nowrap rounded border border-dashed border-cream/70 px-1.5 font-display font-bold [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
+              onPointerDown={(e) => {
+                setDragTarget("text");
+                onPointerDown(e);
+              }}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-move whitespace-nowrap rounded border border-dashed px-1.5 font-display font-bold [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] ${
+                textMode ? "border-promo bg-black/20" : "border-cream/70"
+              }`}
               style={{ left: `${tile.textX * 100}%`, top: `${tile.textY * 100}%`, color: tile.textColor, fontSize: `${tile.textSize * 100}cqw` }}
             >
               {tile.text}
@@ -147,6 +191,31 @@ export function MagnetEditor({
           ) : null}
         </div>
       </div>
+
+      {tile.text ? (
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-black/50 p-1" role="radiogroup" aria-label="What dragging moves">
+          {(
+            [
+              ["photo", "Move photo", ImageIcon],
+              ["text", "Move text", Type],
+            ] as const
+          ).map(([k, label, Icon]) => (
+            <button
+              key={k}
+              type="button"
+              role="radio"
+              aria-checked={dragTarget === k}
+              onClick={() => setDragTarget(k)}
+              className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition ${
+                dragTarget === k ? "bg-gold-metal text-ink" : "text-cream/80 hover:text-gold-light"
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" /> {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {textMode ? <p className="-mt-2 text-center text-xs text-gold-light">Drag or tap anywhere on the magnet to place your text.</p> : null}
 
       <div className="flex items-center gap-2">
         <button type="button" className="btn btn-ghost btn-sm px-2.5" onClick={() => apply({ scale: Math.max(MIN_SCALE, tile.scale - 0.15) })} aria-label="Zoom out">
@@ -180,7 +249,10 @@ export function MagnetEditor({
           maxLength={40}
           placeholder="e.g. My Buddy, names, dates"
           value={tile.text}
-          onChange={(e) => onChange({ text: e.target.value })}
+          onChange={(e) => {
+            if (!tile.text && e.target.value) setDragTarget("text");
+            onChange({ text: e.target.value });
+          }}
         />
         {tile.text ? (
           <div className="mt-3 space-y-3">
@@ -224,7 +296,24 @@ export function MagnetEditor({
                 </button>
               ))}
             </div>
-            <p className="text-xs text-muted">Tip: drag the text on the magnet to place it exactly.</p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted">Nudge text</span>
+              <div className="flex gap-1.5">
+                {(
+                  [
+                    ["Move text left", ArrowLeft, -0.02, 0],
+                    ["Move text up", ArrowUp, 0, -0.02],
+                    ["Move text down", ArrowDown, 0, 0.02],
+                    ["Move text right", ArrowRight, 0.02, 0],
+                  ] as const
+                ).map(([label, Icon, dx, dy]) => (
+                  <button key={label} type="button" className="btn btn-ghost btn-sm px-2.5" aria-label={label} onClick={() => nudgeText(dx, dy)}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-muted">Tip: choose “Move text”, then drag the text anywhere on the magnet.</p>
           </div>
         ) : null}
       </div>

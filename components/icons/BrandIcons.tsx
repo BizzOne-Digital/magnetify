@@ -12,6 +12,28 @@ export function FacebookIcon({ className = "h-5 w-5" }: Props) {
   );
 }
 
+export function TikTokIcon({ className = "h-5 w-5" }: Props) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <rect width="24" height="24" rx="6" fill="#000" />
+      <path
+        fill="#25F4EE"
+        d="M10.2 10.6v-.8a5.4 5.4 0 0 0-.7 0 4.4 4.4 0 1 0 3.1 7.5 4.4 4.4 0 0 0 1.3-3.1V9.9a5.6 5.6 0 0 0 3.3 1V9.3a3.4 3.4 0 0 1-2.6-3.1h-1.6v8.2a2 2 0 1 1-2.8-1.8z"
+        transform="translate(-0.6 -0.4)"
+      />
+      <path
+        fill="#FE2C55"
+        d="M10.2 10.6v-.8a5.4 5.4 0 0 0-.7 0 4.4 4.4 0 1 0 3.1 7.5 4.4 4.4 0 0 0 1.3-3.1V9.9a5.6 5.6 0 0 0 3.3 1V9.3a3.4 3.4 0 0 1-2.6-3.1h-1.6v8.2a2 2 0 1 1-2.8-1.8z"
+        transform="translate(0.6 0.4)"
+      />
+      <path
+        fill="#fff"
+        d="M10.2 10.6v-.8a5.4 5.4 0 0 0-.7 0 4.4 4.4 0 1 0 3.1 7.5 4.4 4.4 0 0 0 1.3-3.1V9.9a5.6 5.6 0 0 0 3.3 1V9.3a3.4 3.4 0 0 1-2.6-3.1h-1.6v8.2a2 2 0 1 1-2.8-1.8z"
+      />
+    </svg>
+  );
+}
+
 export function InstagramIcon({ className = "h-5 w-5" }: Props) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">

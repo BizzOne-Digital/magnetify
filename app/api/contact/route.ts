@@ -3,6 +3,9 @@ import { clientIp, fail, handleError, ok, rateLimit } from "@/lib/api";
 import { connectDB, isDbConfigured } from "@/lib/db";
 import { ContactMessage } from "@/models";
 import { contactSchema } from "@/lib/validation";
+import { after } from "next/server";
+import { contactNotificationEmail, sendEmail } from "@/lib/email";
+import { getSiteSettings } from "@/lib/data";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +21,11 @@ export async function POST(req: Request) {
     if (data.website) return ok({}); // honeypot hit: pretend success
     await connectDB();
     await ContactMessage.create({ name: data.name, email: data.email, subject: data.subject, message: data.message });
+    // Email the shop after responding (message is already safely stored in MongoDB).
+    after(async () => {
+      const site = await getSiteSettings();
+      await sendEmail({ to: process.env.NOTIFY_EMAIL || site.contactEmail, replyTo: data.email, ...contactNotificationEmail(data) });
+    });
     return ok({}, 201);
   } catch (err) {
     return handleError(err);

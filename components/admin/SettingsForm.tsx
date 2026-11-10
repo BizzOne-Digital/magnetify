@@ -6,9 +6,23 @@ import { toast } from "sonner";
 import { CheckCircle2, KeyRound, Save, XCircle } from "lucide-react";
 import { adminFetch } from "@/components/admin/adminFetch";
 
-type Settings = { contactEmail: string; facebookHandle: string; instagramHandle: string; finalSaleNotice: string; announcement: string };
+type Settings = { contactEmail: string; facebookHandle: string; instagramHandle: string; tiktokHandle: string; finalSaleNotice: string; announcement: string };
 
-export function SettingsForm({ initial, stripe, webhook }: { initial: Settings; stripe: boolean; webhook: boolean }) {
+export function SettingsForm({
+  initial,
+  stripe,
+  webhook,
+  paypal,
+  paypalLive,
+  email,
+}: {
+  initial: Settings;
+  stripe: boolean;
+  webhook: boolean;
+  paypal: boolean;
+  paypalLive: boolean;
+  email: "resend" | "smtp" | null;
+}) {
   const router = useRouter();
   const [v, setV] = useState(initial);
   const [saving, setSaving] = useState(false);
@@ -57,6 +71,7 @@ export function SettingsForm({ initial, stripe, webhook }: { initial: Settings; 
         {field("contactEmail", "Public contact email", "The only contact detail shown publicly. Phone numbers are never displayed.")}
         {field("facebookHandle", "Facebook handle")}
         {field("instagramHandle", "Instagram handle")}
+        {field("tiktokHandle", "TikTok handle")}
         {field("finalSaleNotice", "Final sale notice")}
         <button type="button" className="btn btn-gold" onClick={save} disabled={saving}>
           <Save className="h-4 w-4" aria-hidden="true" /> {saving ? "Saving…" : "Save settings"}
@@ -65,12 +80,22 @@ export function SettingsForm({ initial, stripe, webhook }: { initial: Settings; 
 
       <div className="space-y-6">
         <section className="card-dark space-y-3 p-5 text-sm">
-          <h2 className="font-display font-bold text-gold-light">Payments (Stripe)</h2>
-          <Status ok={stripe} label="STRIPE_SECRET_KEY configured" />
-          <Status ok={webhook} label="STRIPE_WEBHOOK_SECRET configured" />
+          <h2 className="font-display font-bold text-gold-light">Payments</h2>
+          <Status ok={stripe} label="Credit/debit card (Stripe) — STRIPE_SECRET_KEY" />
+          <Status ok={webhook} label="Stripe webhook — STRIPE_WEBHOOK_SECRET" />
+          <Status ok={paypal} label={`PayPal — PAYPAL_CLIENT_ID / SECRET${paypal ? (paypalLive ? " (live)" : " (sandbox / test mode)") : ""}`} />
           <p className="text-xs text-muted">
             Without Stripe keys, orders are saved as &quot;awaiting payment&quot; and customers are told you will email a payment request. Set the keys in
             your Vercel environment variables and point a Stripe webhook to <code className="text-cream">/api/payments/stripe/webhook</code>.
+          </p>
+        </section>
+
+        <section className="card-dark space-y-3 p-5 text-sm">
+          <h2 className="font-display font-bold text-gold-light">Email notifications</h2>
+          <Status ok={Boolean(email)} label={email ? `Sending via ${email === "resend" ? "Resend" : "SMTP"}` : "Not configured — contact messages and orders are saved but not emailed"} />
+          <p className="text-xs text-muted">
+            Set <code className="text-cream">RESEND_API_KEY</code> + <code className="text-cream">EMAIL_FROM</code> (or SMTP_HOST/PORT/USER/PASS) in Vercel. Notifications go to{" "}
+            <code className="text-cream">NOTIFY_EMAIL</code> or the contact email above.
           </p>
         </section>
 

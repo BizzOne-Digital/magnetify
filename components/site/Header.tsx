@@ -52,7 +52,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-gold/40 bg-ink/95 backdrop-blur supports-[backdrop-filter]:bg-ink/85">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link href="/" aria-label="Magnetify home" className="shrink-0">
-          <Logo />
+          <Logo priority />
         </Link>
 
         <div className="hidden items-center gap-8 lg:flex">

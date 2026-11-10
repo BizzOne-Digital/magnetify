@@ -86,6 +86,7 @@ export default async function ProductsPage() {
                   </Link>
                 ))}
               </div>
+              <p className="text-sm font-semibold text-champagne">Minimum order quantity applies.</p>
               <p className="text-xs text-muted">Same sizes, pricing and bulk discounts as photo magnets.</p>
             </div>
           </div>

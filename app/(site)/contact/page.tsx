@@ -3,7 +3,7 @@ import { Mail } from "lucide-react";
 import { getPageContent, getSiteSettings } from "@/lib/data";
 import { PageHero } from "@/components/site/ui";
 import { ContactForm } from "@/components/site/ContactForm";
-import { FacebookIcon, InstagramIcon } from "@/components/icons/BrandIcons";
+import { FacebookIcon, InstagramIcon, TikTokIcon } from "@/components/icons/BrandIcons";
 
 export const revalidate = 60;
 
@@ -41,6 +41,11 @@ export default async function ContactPage() {
             <a href={`https://www.instagram.com/${site.instagramHandle}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-cream hover:text-gold-light">
               <InstagramIcon className="h-7 w-7" /> Instagram: <strong>{site.instagramHandle}</strong>
             </a>
+            {site.tiktokHandle ? (
+              <a href={`https://www.tiktok.com/@${site.tiktokHandle}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-cream hover:text-gold-light">
+                <TikTokIcon className="h-7 w-7" /> TikTok: <strong>{site.tiktokHandle}</strong>
+              </a>
+            ) : null}
           </div>
         </div>
         <ContactForm title={c.formTitle} />

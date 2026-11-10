@@ -7,7 +7,7 @@ import { AlertTriangle, ArrowRight, Pencil, ShoppingCart, Tag, Trash2, Truck } f
 import { useCart } from "@/components/cart/CartProvider";
 import { TileView } from "@/components/customizer/TileView";
 import { calculatePricing, money, type PricedProduct } from "@/lib/pricing";
-import { quoteShipping, type ShippingConfig } from "@/lib/shipping";
+import { freeShippingText, quoteShipping, type ShippingConfig } from "@/lib/shipping";
 import { FRAME_RATIO, filledTiles } from "@/lib/cart/types";
 
 export function useCartPricing(products: PricedProduct[]) {
@@ -137,7 +137,9 @@ export function CartView({ products, shipping, finalSaleNotice }: { products: Pr
           />
         </dl>
         {ship.freeShippingRemaining && ship.freeShippingRemaining > 0 ? (
-          <p className="text-xs text-muted">Add {money(ship.freeShippingRemaining)} more for free shipping.</p>
+          <p className="rounded-lg bg-gold/10 px-3 py-2 text-xs text-gold-light">
+            Add {money(ship.freeShippingRemaining)} more for free shipping ({freeShippingText(shipping).toLowerCase()}).
+          </p>
         ) : null}
         {pricing.nextTier ? (
           <p className="text-xs text-muted">
@@ -172,6 +174,7 @@ export function CartView({ products, shipping, finalSaleNotice }: { products: Pr
         <Link href="/customize" className="btn btn-ghost w-full">
           Add more magnets
         </Link>
+        {shipping.shippingNotice ? <p className="text-center text-xs font-semibold text-champagne">{shipping.shippingNotice}</p> : null}
         <p className="text-center text-xs italic text-muted">{finalSaleNotice}</p>
       </aside>
     </div>

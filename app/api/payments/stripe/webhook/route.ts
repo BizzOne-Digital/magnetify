@@ -1,6 +1,8 @@
 import { connectDB } from "@/lib/db";
 import { Order } from "@/models";
 import { verifyStripeSignature } from "@/lib/payments";
+import { after } from "next/server";
+import { sendOrderEmails } from "@/lib/orderEmails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,7 +25,11 @@ export async function POST(req: Request) {
     if (orderId && /^[a-f0-9]{24}$/i.test(orderId)) {
       await connectDB();
       if (event.type === "checkout.session.completed" && obj.payment_status === "paid") {
-        await Order.updateOne({ _id: orderId }, { $set: { paymentStatus: "paid", status: "processing", paymentRef: obj.id } });
+        const res = await Order.updateOne({ _id: orderId, paymentStatus: { $ne: "paid" } }, { $set: { paymentStatus: "paid", status: "processing", paymentRef: obj.id } });
+        if (res.modifiedCount) {
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
+          after(() => sendOrderEmails(orderId, "Payment received by card. We will email you when your magnets ship.", siteUrl));
+        }
       } else if (event.type === "checkout.session.async_payment_succeeded") {
         await Order.updateOne({ _id: orderId }, { $set: { paymentStatus: "paid", status: "processing" } });
       } else if (event.type === "checkout.session.async_payment_failed" || event.type === "checkout.session.expired") {

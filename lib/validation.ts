@@ -52,6 +52,7 @@ export const orderSchema = z
       .min(1, "Your cart is empty")
       .max(30),
     socialConsent: z.enum(["agree", "disagree"], { message: "Please choose a social media consent option" }),
+    paymentMethod: z.enum(["card", "paypal", "manual"]).optional(),
     notes: trimmed(1000).optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
@@ -111,12 +112,15 @@ export const shippingSchema = z.object({
     )
     .max(20)
     .default([]),
+  allowedProvinces: z.array(z.enum(["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"])).max(13).default([]),
+  shippingNotice: trimmed(200).default(""),
 });
 
 export const siteSettingsSchema = z.object({
   contactEmail: z.string().trim().email(),
   facebookHandle: trimmed(80).regex(/^[a-zA-Z0-9._-]*$/, "Handle may only contain letters, numbers, dots, dashes"),
   instagramHandle: trimmed(80).regex(/^[a-zA-Z0-9._-]*$/, "Handle may only contain letters, numbers, dots, dashes"),
+  tiktokHandle: trimmed(80).regex(/^[a-zA-Z0-9._-]*$/, "Handle may only contain letters, numbers, dots, dashes").default(""),
   finalSaleNotice: trimmed(300),
   announcement: trimmed(300).default(""),
 });
