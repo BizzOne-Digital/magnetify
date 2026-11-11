@@ -37,6 +37,8 @@ export const PRINT_PX: Record<MagnetSize, { w: number; h: number }> = {
   "2x2": { w: 600, h: 600 },
   "2x3": { w: 600, h: 900 },
 };
+/** Fold-behind flap on each side of the cut sheet: (2.75" - 2") / 2 = 0.375" at 300 DPI. */
+export const PRINT_FLAP_PX = 113;
 
 export const TEXT_COLORS = ["#1E6FD9", "#F5D67B", "#111111", "#D71920", "#FFFFFF"];
 

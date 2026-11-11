@@ -38,6 +38,9 @@ export function PhotoUploadGrid({
             {filled} / {tiles.length} photos
           </span>
         </div>
+        <p className="mb-2 px-1 text-[11px] text-[#6b6b6b] sm:text-xs">
+          Keep your photo and text inside the dotted line. The outer edge folds behind the magnet for a clean finish.
+        </p>
         <ul className="grid grid-cols-3 gap-2.5 rounded-lg bg-white p-3 shadow-[0_4px_18px_rgba(0,0,0,0.35)] sm:gap-4 sm:p-5">
           {tiles.map((t, i) => {
             const busy = busyIds.has(t.id);

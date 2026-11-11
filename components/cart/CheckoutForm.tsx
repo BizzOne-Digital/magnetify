@@ -9,6 +9,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { useCartPricing } from "@/components/cart/CartView";
 import { TileView } from "@/components/customizer/TileView";
 import { renderTile } from "@/lib/cart/render";
+import { newOrderNumber } from "@/lib/orderNumber";
 import { FRAME_RATIO, filledTiles, type TileState } from "@/lib/cart/types";
 import { money, type PricedProduct } from "@/lib/pricing";
 import { PROVINCE_NAMES, freeShippingText, quoteShipping, shipsTo, type ShippingConfig } from "@/lib/shipping";
@@ -102,7 +103,8 @@ export function CheckoutForm({
 
     setSubmitting(true);
     try {
-      // 1) Render and upload print-ready artwork for each magnet.
+      // 1) Render and upload print-ready artwork. The order number is printed on the fold-behind flap.
+      const number = newOrderNumber();
       const all: { itemIdx: number; tile: TileState }[] = [];
       items.forEach((it, itemIdx) => filledTiles(it).forEach((tile) => all.push({ itemIdx, tile })));
       setProgress({ done: 0, total: all.length });
@@ -112,7 +114,7 @@ export function CheckoutForm({
       const worker = async () => {
         while (queue.length) {
           const job = queue.shift()!;
-          const blob = await renderTile(job.tile, items[job.itemIdx].size);
+          const blob = await renderTile(job.tile, items[job.itemIdx].size, number);
           urls.set(job.tile.id, await uploadArtwork(blob));
           done++;
           setProgress({ done, total: all.length });
@@ -122,6 +124,7 @@ export function CheckoutForm({
 
       // 2) Create the order (server recalculates all prices).
       const payload = {
+        orderNumber: number,
         customer: { name: get("name"), email: get("email"), phone: get("phone") },
         fulfillment,
         shippingAddress: {

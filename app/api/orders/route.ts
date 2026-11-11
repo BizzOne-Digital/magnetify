@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import { newOrderNumber } from "@/lib/orderNumber";
 import { requireAdminApi } from "@/lib/auth";
 import { clientIp, fail, handleError, ok, rateLimit } from "@/lib/api";
 import { connectDB, isDbConfigured } from "@/lib/db";
@@ -15,11 +15,6 @@ import { sendOrderEmails } from "@/lib/orderEmails";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function orderNumber() {
-  const d = new Date();
-  const ymd = `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-  return `MG-${ymd}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
-}
 
 /** Public: create an order. All prices, discounts and shipping are recalculated on the server. */
 export async function POST(req: Request) {
@@ -67,7 +62,9 @@ export async function POST(req: Request) {
       return fail("That payment method is not available. Please choose another.", 422);
     }
 
-    const number = orderNumber();
+    // The browser picks the number so it can print it on the magnet flaps.
+    const number = input.orderNumber ?? newOrderNumber();
+    if (input.orderNumber && (await Order.exists({ orderNumber: number }))) return fail("Please try placing your order again.", 409);
     const order = new Order({
       orderNumber: number,
       customer: input.customer,

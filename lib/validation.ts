@@ -1,3 +1,4 @@
+import { ORDER_NUMBER_RE } from "./orderNumber";
 import { z } from "zod";
 import { MAGNET_FONT_IDS } from "@/lib/cart/fonts";
 
@@ -30,6 +31,7 @@ export const tileSchema = z.object({
 
 export const orderSchema = z
   .object({
+    orderNumber: z.string().regex(ORDER_NUMBER_RE).optional(),
     customer: z.object({
       name: trimmed(100).min(2, "Please enter your full name"),
       email: z.string().trim().email("Please enter a valid email").max(200),
