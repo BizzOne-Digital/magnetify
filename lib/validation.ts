@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAGNET_FONT_IDS } from "@/lib/cart/fonts";
 
 const trimmed = (max: number) => z.string().trim().max(max);
 
@@ -24,6 +25,7 @@ export const tileSchema = z.object({
   textY: z.number().finite().min(0).max(1),
   textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   textSize: z.number().finite().min(0.01).max(0.3),
+  textFont: z.enum(MAGNET_FONT_IDS).default("classic"),
 });
 
 export const orderSchema = z

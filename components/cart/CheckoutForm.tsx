@@ -145,6 +145,7 @@ export function CheckoutForm({
             textY: t.textY,
             textColor: t.textColor,
             textSize: t.textSize,
+            textFont: t.textFont ?? "classic",
           })),
         })),
         socialConsent: consent,

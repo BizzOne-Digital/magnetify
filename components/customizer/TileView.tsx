@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getPhotoUrl } from "@/lib/cart/imageStore";
 import { imageStyle } from "@/lib/cart/geometry";
 import type { TileState } from "@/lib/cart/types";
+import { magnetFontStyle } from "@/lib/cart/fonts";
 
 export function usePhotoUrl(key: string | null) {
   const [state, setState] = useState<{ key: string | null; url: string | null; missing: boolean }>({
@@ -51,12 +52,13 @@ export function TileView({
       ) : null}
       {showText && tile.text ? (
         <span
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-display font-bold [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]"
           style={{
             left: `${tile.textX * 100}%`,
             top: `${tile.textY * 100}%`,
             color: tile.textColor,
             fontSize: `${tile.textSize * 100}cqw`,
+            ...magnetFontStyle(tile.textFont),
           }}
         >
           {tile.text}

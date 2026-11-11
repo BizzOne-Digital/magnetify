@@ -5,6 +5,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ImageIcon, Move, RefreshCw, 
 import { usePhotoUrl } from "@/components/customizer/TileView";
 import { clampOffset, imageStyle } from "@/lib/cart/geometry";
 import { TEXT_COLORS, type TileState } from "@/lib/cart/types";
+import { MAGNET_FONTS, getMagnetFont, magnetFontStyle } from "@/lib/cart/fonts";
 
 const MIN_SCALE = 1;
 const MAX_SCALE = 4;
@@ -181,10 +182,10 @@ export function MagnetEditor({
                 setDragTarget("text");
                 onPointerDown(e);
               }}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-move whitespace-nowrap rounded border border-dashed px-1.5 font-display font-bold [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] ${
+              className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-move whitespace-nowrap rounded border border-dashed px-1.5 [text-shadow:0_1px_6px_rgba(0,0,0,0.6)] ${
                 textMode ? "border-promo bg-black/20" : "border-cream/70"
               }`}
-              style={{ left: `${tile.textX * 100}%`, top: `${tile.textY * 100}%`, color: tile.textColor, fontSize: `${tile.textSize * 100}cqw` }}
+              style={{ left: `${tile.textX * 100}%`, top: `${tile.textY * 100}%`, color: tile.textColor, fontSize: `${tile.textSize * 100}cqw`, ...magnetFontStyle(tile.textFont) }}
             >
               {tile.text}
             </span>
@@ -285,16 +286,32 @@ export function MagnetEditor({
                 className="h-2 flex-1 accent-[#D4AF37]"
               />
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              {[
-                ["Top", 0.14],
-                ["Middle", 0.5],
-                ["Bottom", 0.86],
-              ].map(([l, y]) => (
-                <button key={l} type="button" className="btn btn-ghost btn-sm" onClick={() => onChange({ textX: 0.5, textY: y as number })}>
-                  {l}
-                </button>
-              ))}
+            <div>
+              <p className="mb-1.5 text-xs text-muted">Font</p>
+              <div className="grid grid-cols-5 gap-1.5" role="radiogroup" aria-label="Text font">
+                {MAGNET_FONTS.map((f) => {
+                  const active = getMagnetFont(tile.textFont).id === f.id;
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      aria-label={`${f.label} font`}
+                      title={f.label}
+                      onClick={() => onChange({ textFont: f.id })}
+                      className={`flex flex-col items-center gap-0.5 rounded-lg border px-1 py-1.5 transition ${
+                        active ? "border-gold bg-gold/15 text-gold-light" : "border-white/10 text-cream hover:border-gold/50"
+                      }`}
+                    >
+                      <span className="text-lg leading-none" style={magnetFontStyle(f.id)}>
+                        Aa
+                      </span>
+                      <span className="text-[10px] leading-none text-muted">{f.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted">Nudge text</span>

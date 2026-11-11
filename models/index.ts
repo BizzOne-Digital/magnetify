@@ -89,6 +89,7 @@ export interface TileConfig {
   textY: number;
   textColor: string;
   textSize: number;
+  textFont?: string;
 }
 const TileSchema = new Schema(
   {
@@ -102,6 +103,7 @@ const TileSchema = new Schema(
     textY: Number,
     textColor: String,
     textSize: Number,
+    textFont: { type: String, default: "classic" },
   },
   { _id: false }
 );

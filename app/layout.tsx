@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Montserrat } from "next/font/google";
+import { Bebas_Neue, Dancing_Script, Inter, Montserrat, Pacifico, Playfair_Display } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -10,6 +10,12 @@ const montserrat = Montserrat({
   weight: ["600", "700", "800", "900"],
   display: "swap",
 });
+
+// Magnet text fonts (see lib/cart/fonts.ts). Not preloaded: only needed once a customer adds text.
+const playfair = Playfair_Display({ variable: "--font-playfair", subsets: ["latin"], weight: ["700"], display: "swap", preload: false });
+const dancing = Dancing_Script({ variable: "--font-dancing", subsets: ["latin"], weight: ["700"], display: "swap", preload: false });
+const bebas = Bebas_Neue({ variable: "--font-bebas", subsets: ["latin"], weight: "400", display: "swap", preload: false });
+const pacifico = Pacifico({ variable: "--font-pacifico", subsets: ["latin"], weight: "400", display: "swap", preload: false });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -42,7 +48,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${montserrat.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${montserrat.variable} ${playfair.variable} ${dancing.variable} ${bebas.variable} ${pacifico.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-ink text-cream">
         {children}
         <Toaster

@@ -1,6 +1,7 @@
 "use client";
 import { drawSize } from "./geometry";
 import { getPhotoUrl, loadImage } from "./imageStore";
+import { getMagnetFont } from "./fonts";
 import { FRAME_RATIO, PRINT_PX, type MagnetSize, type TileState } from "./types";
 
 /** Renders the final print-ready magnet artwork (photo crop + text) to a JPEG blob at 300 DPI. */
@@ -28,7 +29,15 @@ export async function renderTile(tile: TileState, size: MagnetSize): Promise<Blo
 
   if (tile.text.trim()) {
     const fontPx = Math.round(tile.textSize * PW);
-    ctx.font = `700 ${fontPx}px Montserrat, Arial, sans-serif`;
+    const f = getMagnetFont(tile.textFont);
+    const family = getComputedStyle(document.documentElement).getPropertyValue(f.cssVar).trim() || "Arial";
+    const font = `${f.weight} ${fontPx}px ${family}, Arial, sans-serif`;
+    try {
+      await document.fonts.load(font, tile.text); // make sure the web font is ready before drawing
+    } catch {
+      /* falls back to Arial */
+    }
+    ctx.font = font;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.shadowColor = "rgba(0,0,0,0.55)";

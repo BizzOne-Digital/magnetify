@@ -19,6 +19,8 @@ export interface TileState {
   textColor: string;
   /** Font size as a fraction of frame width. */
   textSize: number;
+  /** Font id from lib/cart/fonts.ts (older saved tiles may not have it). */
+  textFont?: string;
 }
 
 export interface CartItem {
@@ -36,7 +38,7 @@ export const PRINT_PX: Record<MagnetSize, { w: number; h: number }> = {
   "2x3": { w: 600, h: 900 },
 };
 
-export const TEXT_COLORS = ["#FFF8E7", "#F5D67B", "#111111", "#D71920", "#FFFFFF"];
+export const TEXT_COLORS = ["#1E6FD9", "#F5D67B", "#111111", "#D71920", "#FFFFFF"];
 
 export function newTile(): TileState {
   return {
@@ -50,8 +52,9 @@ export function newTile(): TileState {
     text: "",
     textX: 0.5,
     textY: 0.85,
-    textColor: "#FFF8E7",
+    textColor: "#FFFFFF",
     textSize: 0.09,
+    textFont: "classic",
   };
 }
 
