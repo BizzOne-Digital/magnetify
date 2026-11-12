@@ -35,7 +35,7 @@ export const IMG = {
   team: unsplash("photo-1517245386807-bb43f82c33c4"),
   friends: unsplash("photo-1522673607200-164d1b6ce486"),
   pet: unsplash("photo-1583337130417-3346a1be7dee"),
-  packing: unsplash("photo-1607166452427-7e4477079cb9"),
+  packing: "/quality-care-packing.jpg",
 };
 
 const featureItem: FieldDef[] = [
