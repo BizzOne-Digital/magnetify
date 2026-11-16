@@ -10,7 +10,7 @@ import { useCartPricing } from "@/components/cart/CartView";
 import { TileView } from "@/components/customizer/TileView";
 import { renderTile } from "@/lib/cart/render";
 import { newOrderNumber } from "@/lib/orderNumber";
-import { FRAME_RATIO, filledTiles, type TileState } from "@/lib/cart/types";
+import { FRAME_RATIO, filledTiles, shapeOf, type TileState } from "@/lib/cart/types";
 import { money, type PricedProduct } from "@/lib/pricing";
 import { PROVINCE_NAMES, freeShippingText, quoteShipping, shipsTo, type ShippingConfig } from "@/lib/shipping";
 
@@ -114,7 +114,7 @@ export function CheckoutForm({
       const worker = async () => {
         while (queue.length) {
           const job = queue.shift()!;
-          const blob = await renderTile(job.tile, items[job.itemIdx].size, number);
+          const blob = await renderTile(job.tile, shapeOf(items[job.itemIdx].size, items[job.itemIdx].orientation), number);
           urls.set(job.tile.id, await uploadArtwork(blob));
           done++;
           setProgress({ done, total: all.length });
@@ -137,6 +137,7 @@ export function CheckoutForm({
         },
         items: items.map((it) => ({
           productSlug: it.productSlug,
+          orientation: it.size === "2x3" ? (it.orientation ?? "horizontal") : undefined,
           tiles: filledTiles(it).map((t) => ({
             id: t.id,
             printUrl: urls.get(t.id)!,
@@ -337,7 +338,7 @@ export function CheckoutForm({
             return (
               <li key={it.id} className="flex gap-3">
                 <div className="w-14 shrink-0 overflow-hidden rounded-md border border-white/10">
-                  {it.tiles[0] ? <TileView tile={it.tiles[0]} ratio={FRAME_RATIO[it.size]} /> : null}
+                  {it.tiles[0] ? <TileView tile={it.tiles[0]} ratio={FRAME_RATIO[shapeOf(it.size, it.orientation)]} /> : null}
                 </div>
                 <div className="flex-1 text-sm">
                   <p className="font-semibold text-cream">{productName.get(it.productSlug) ?? it.productSlug}</p>

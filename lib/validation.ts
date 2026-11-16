@@ -50,6 +50,7 @@ export const orderSchema = z
       .array(
         z.object({
           productSlug: z.string().regex(/^[a-z0-9-]+$/),
+          orientation: z.enum(["horizontal", "vertical"]).optional(),
           tiles: z.array(tileSchema).min(1).max(200),
         })
       )

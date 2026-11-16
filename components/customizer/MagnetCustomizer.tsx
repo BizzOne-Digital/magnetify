@@ -11,7 +11,7 @@ import { MagnetEditor } from "@/components/customizer/MagnetEditor";
 import { StepBar } from "@/components/customizer/StepBar";
 import { ingestPhoto } from "@/lib/cart/imageStore";
 import { clampOffset } from "@/lib/cart/geometry";
-import { FRAME_RATIO, filledTiles, newTile, type CartItem, type TileState } from "@/lib/cart/types";
+import { FRAME_RATIO, filledTiles, newTile, shapeOf, type CartItem, type Orientation, type TileState } from "@/lib/cart/types";
 import { money, type PricedProduct } from "@/lib/pricing";
 
 const DRAFT_KEY = "magnetify-draft-v1";
@@ -19,6 +19,7 @@ const MAX_TILES = 200;
 
 interface Draft {
   slug: string;
+  orientation?: Orientation;
   tiles: TileState[];
 }
 
@@ -47,6 +48,7 @@ export function MagnetCustomizer({
 
   const [kind, setKind] = useState<"photo" | "business">(initialProduct?.kind ?? "photo");
   const [slug, setSlug] = useState(initialProduct?.slug ?? "");
+  const [orientation, setOrientation] = useState<Orientation>("horizontal");
   const [tiles, setTiles] = useState<TileState[]>(() =>
     // Deterministic ids for the server render (random ids would break hydration).
     Array.from({ length: initialProduct?.minOrder ?? 9 }, (_, i) => ({ ...newTile(), id: `slot-${i}` }))
@@ -61,7 +63,7 @@ export function MagnetCustomizer({
   const [edited, setEdited] = useState(false);
 
   const product = products.find((p) => p.slug === slug) ?? initialProduct;
-  const ratio = product ? FRAME_RATIO[product.size] : 1;
+  const ratio = product ? FRAME_RATIO[shapeOf(product.size, orientation)] : 1;
   const sizeOptions = products.filter((p) => p.kind === kind);
   const hasBusiness = products.some((p) => p.kind === "business");
 
@@ -75,6 +77,7 @@ export function MagnetCustomizer({
       if (item && p) {
         setKind(p.kind);
         setSlug(p.slug);
+        setOrientation(item.orientation ?? "horizontal");
         setTiles(padTiles(item.tiles, p.minOrder));
         setEditingItemId(item.id);
         setSelectedId(item.tiles[0]?.id ?? null);
@@ -88,6 +91,7 @@ export function MagnetCustomizer({
         if (d && p && d.tiles.some((t) => t.imageKey) && (!initialSlug || initialSlug === d.slug)) {
           setKind(p.kind);
           setSlug(p.slug);
+          setOrientation(d.orientation ?? "horizontal");
           setTiles(padTiles(d.tiles, p.minOrder));
           toast.message("We restored your unsaved design.");
         }
@@ -103,12 +107,12 @@ export function MagnetCustomizer({
   useEffect(() => {
     if (!hydrated || editingItemId || variant !== "page") return;
     try {
-      if (tiles.some((t) => t.imageKey)) localStorage.setItem(DRAFT_KEY, JSON.stringify({ slug, tiles } satisfies Draft));
+      if (tiles.some((t) => t.imageKey)) localStorage.setItem(DRAFT_KEY, JSON.stringify({ slug, orientation, tiles } satisfies Draft));
       else localStorage.removeItem(DRAFT_KEY);
     } catch {
       /* ignore */
     }
-  }, [tiles, slug, hydrated, editingItemId, variant]);
+  }, [tiles, slug, orientation, hydrated, editingItemId, variant]);
 
   const filled = tiles.filter((t) => t.imageKey).length;
   const min = product?.minOrder ?? 1;
@@ -123,13 +127,21 @@ export function MagnetCustomizer({
   const changeProduct = (nextSlug: string) => {
     const p = products.find((x) => x.slug === nextSlug);
     if (!p) return;
-    const r = FRAME_RATIO[p.size];
+    const r = FRAME_RATIO[shapeOf(p.size, orientation)];
     setSlug(nextSlug);
     setSizeConfirmed(true);
     setTiles((prev) => {
       const kept = prev.filter((t) => t.imageKey).map((t) => ({ ...t, ...clampOffset({ ...t, scale: t.scale }, r) }));
       return padTiles(kept, p.minOrder);
     });
+  };
+
+  const changeOrientation = (o: Orientation) => {
+    if (!product || o === orientation) return;
+    const r = FRAME_RATIO[shapeOf(product.size, o)];
+    setOrientation(o);
+    // Photos are re-fitted to the new frame shape.
+    setTiles((prev) => prev.map((t) => (t.imageKey ? { ...t, scale: 1, ...clampOffset({ ...t, scale: 1, x: 0, y: 0 }, r) } : t)));
   };
 
   const changeKind = (k: "photo" | "business") => {
@@ -216,6 +228,7 @@ export function MagnetCustomizer({
       productSlug: product.slug,
       size: product.size,
       kind: product.kind,
+      orientation: product.size === "2x3" ? orientation : undefined,
       tiles: done,
       createdAt: Date.now(),
     };
@@ -296,6 +309,36 @@ export function MagnetCustomizer({
             </div>
           ) : null}
           <SizeSelector products={sizeOptions} value={slug} onChange={changeProduct} />
+          {product.size === "2x3" ? (
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gold-light">Orientation</p>
+              <div className="grid grid-cols-2 gap-1 rounded-xl bg-black/50 p-1" role="radiogroup" aria-label="Magnet orientation">
+                {(
+                  [
+                    ["vertical", "Vertical"],
+                    ["horizontal", "Horizontal"],
+                  ] as const
+                ).map(([o, label]) => (
+                  <button
+                    key={o}
+                    type="button"
+                    role="radio"
+                    aria-checked={orientation === o}
+                    onClick={() => changeOrientation(o)}
+                    className={`flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition ${
+                      orientation === o ? "bg-gold-metal text-ink" : "text-cream/80 hover:text-gold-light"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block rounded-[2px] border-2 border-current ${o === "vertical" ? "h-4 w-3" : "h-3 w-4"}`}
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           {kind === "business" ? (
             <p className="text-xs text-muted">Upload your logo, business card design or promotional artwork as an image (PNG or JPG).</p>
           ) : null}

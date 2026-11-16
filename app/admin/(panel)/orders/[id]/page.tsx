@@ -7,6 +7,7 @@ import { money } from "@/lib/pricing";
 import { AdminPageTitle } from "@/components/admin/AdminHeader";
 import { OrderActions } from "@/components/admin/OrderActions";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { PrintSheets } from "@/components/admin/PrintSheets";
 
 export default async function AdminOrderDetail({ params }: PageProps<"/admin/orders/[id]">) {
   const { id } = await params;
@@ -39,11 +40,12 @@ export default async function AdminOrderDetail({ params }: PageProps<"/admin/ord
               <section key={idx} className="card-dark p-5">
                 <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="font-display text-lg font-bold text-cream">
-                    {item.productName} <span className="text-sm text-muted">({item.size}, {item.kind})</span>
+                    {item.productName} <span className="text-sm text-muted">({item.size}{item.size === "2x3" ? `, ${c?.orientation ?? "horizontal"}` : ""}, {item.kind})</span>
                   </h2>
                   <p className="text-sm">
                     {item.quantity} × {money(item.unitPrice)} = <strong className="text-gold-light">{money(item.lineTotal)}</strong>
                   </p>
+                  <PrintSheets urls={c ? c.tiles.map((t) => t.printUrl) : item.previewUrls} size={item.size === "2x3" && c?.orientation === "vertical" ? "2x3v" : item.size} orderNumber={o.orderNumber} />
                 </div>
                 <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5 lg:grid-cols-6">
                   {(c?.tiles ?? item.previewUrls.map((u) => ({ printUrl: u, text: "" }))).map((t, i) => (

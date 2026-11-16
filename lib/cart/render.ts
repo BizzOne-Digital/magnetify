@@ -2,17 +2,17 @@
 import { drawSize } from "./geometry";
 import { getPhotoUrl, loadImage } from "./imageStore";
 import { getMagnetFont } from "./fonts";
-import { FRAME_RATIO, PRINT_FLAP_PX, PRINT_PX, type MagnetSize, type TileState } from "./types";
+import { FRAME_RATIO, PRINT_FLAP_PX, PRINT_PX, type MagnetShape, type TileState } from "./types";
 
 const BLEED = 18; // ~0.06" of photo wraps onto the magnet edge
 const WEBSITE = "magnetify.ca";
 
 /**
  * Renders the print-ready cut sheet for one magnet at 300 DPI:
- * an octagon (2.75" x 2.75" for 2x2) with the finished face in the middle (dotted line),
- * and the website + order number on the flaps that fold behind the magnet.
+ * an octagon (2.75" x 2.75" for 2x2, 3.75" x 2.75" for 2x3) with the finished face in the middle (dotted line),
+ * "magnetify.ca" on the top flap and the order number on the bottom flap (both fold behind the magnet).
  */
-export async function renderTile(tile: TileState, size: MagnetSize, orderNumber: string): Promise<Blob> {
+export async function renderTile(tile: TileState, size: MagnetShape, orderNumber: string): Promise<Blob> {
   if (!tile.imageKey) throw new Error("Tile has no photo");
   const url = await getPhotoUrl(tile.imageKey);
   if (!url) throw new Error("A photo is missing from this device. Please re-upload it.");
@@ -87,18 +87,26 @@ export async function renderTile(tile: TileState, size: MagnetSize, orderNumber:
   ctx.strokeRect(M, M, PW, PH);
   ctx.restore();
 
-  // Flap labels (fold behind the magnet).
+  // Flap labels. Top and bottom flaps fold behind, so their text is printed upside down
+  // and reads the right way on the back of the finished magnet.
   const labelFamily = getComputedStyle(document.documentElement).getPropertyValue("--font-montserrat").trim() || "Arial";
   ctx.save();
   ctx.fillStyle = "#222";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  ctx.translate(SW / 2, M / 2);
+  ctx.rotate(Math.PI);
   ctx.font = `600 34px ${labelFamily}, Arial, sans-serif`;
-  ctx.fillText(WEBSITE, SW / 2, M / 2, PW - 40);
-  ctx.translate(M / 2, SH / 2);
-  ctx.rotate(-Math.PI / 2);
-  ctx.font = `600 30px ${labelFamily}, Arial, sans-serif`;
-  ctx.fillText(`Order # ${orderNumber}`, 0, 0, PH - 40);
+  ctx.fillText(WEBSITE, 0, 0, PW - 40);
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle = "#222";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.translate(SW / 2, SH - M / 2);
+  ctx.rotate(Math.PI);
+  ctx.font = `600 26px ${labelFamily}, Arial, sans-serif`;
+  ctx.fillText(`Order # ${orderNumber}`, 0, 0, PW - 40);
   ctx.restore();
 
   // Cut line on top.

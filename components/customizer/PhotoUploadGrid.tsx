@@ -26,6 +26,11 @@ export function PhotoUploadGrid({
 }) {
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
   const filled = tiles.filter((t) => t.imageKey).length;
+  // Cut-sheet geometry in inches: finished face + 3/8" fold-behind flap on every side.
+  const faceW = ratio < 1 ? 3 : 2; // 2x3 horizontal is 3" wide; 2x2 and 2x3 vertical are 2" wide
+  const faceH = faceW * ratio;
+  const sheetW = faceW + 0.75;
+  const sheetH = faceH + 0.75;
 
   return (
     <div>
@@ -41,12 +46,17 @@ export function PhotoUploadGrid({
         <p className="mb-2 px-1 text-[11px] text-[#6b6b6b] sm:text-xs">
           Keep your photo and text inside the dotted line. The outer edge folds behind the magnet for a clean finish.
         </p>
-        <ul className="grid grid-cols-3 gap-2.5 rounded-lg bg-white p-3 shadow-[0_4px_18px_rgba(0,0,0,0.35)] sm:gap-4 sm:p-5">
+        <ul className={`grid ${ratio < 1 ? "grid-cols-2" : "grid-cols-3"} gap-1.5 rounded-lg bg-white p-3 shadow-[0_4px_18px_rgba(0,0,0,0.35)] sm:gap-3 sm:p-5`}>
           {tiles.map((t, i) => {
             const busy = busyIds.has(t.id);
             const selected = t.id === selectedId;
             return (
-              <li key={t.id} className="relative">
+              <li key={t.id} className="relative" style={{ aspectRatio: `${sheetW} / ${sheetH}` }}>
+                <OctagonGuide w={sheetW} h={sheetH} />
+                <div
+                  className="absolute"
+                  style={{ left: `${(0.375 / sheetW) * 100}%`, top: `${(0.375 / sheetH) * 100}%`, width: `${(faceW / sheetW) * 100}%`, height: `${(faceH / sheetH) * 100}%` }}
+                >
                 <input
                   ref={(el) => {
                     inputs.current[t.id] = el;
@@ -106,6 +116,8 @@ export function PhotoUploadGrid({
                     </span>
                   </button>
                 )}
+                <span className="pointer-events-none absolute inset-0 border-2 border-dashed border-black/60" aria-hidden="true" />
+                </div>
               </li>
             );
           })}
@@ -115,25 +127,37 @@ export function PhotoUploadGrid({
   );
 }
 
-/** Empty-frame placeholder matching the print template (sky, cloud and green hills). */
+/** Octagon cut line with "magnetify.ca" upside down on the top flap, as on the printed sheet. */
+function OctagonGuide({ w, h }: { w: number; h: number }) {
+  const c = 0.75;
+  const pts = `${c},0 ${w - c},0 ${w},${c} ${w},${h - c} ${w - c},${h} ${c},${h} 0,${h - c} 0,${c}`;
+  return (
+    <svg viewBox={`-0.02 -0.02 ${w + 0.04} ${h + 0.04}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+      <polygon points={pts} fill="#fff" stroke="#9a9a9a" strokeWidth="0.02" />
+      <text
+        x={w / 2}
+        y={0.19}
+        transform={`rotate(180 ${w / 2} 0.19)`}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize="0.17"
+        fontWeight="600"
+        fill="#555"
+        fontFamily="var(--font-montserrat), sans-serif"
+      >
+        magnetify.ca
+      </text>
+    </svg>
+  );
+}
+
+/** Empty-slot placeholder: the Magnetify logo as a soft watermark. */
 function LandscapePlaceholder() {
   return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" aria-hidden="true">
-      <defs>
-        <linearGradient id="ph-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#8fc3ea" />
-          <stop offset="1" stopColor="#d6ecfa" />
-        </linearGradient>
-      </defs>
-      <rect width="100" height="100" fill="url(#ph-sky)" />
-      <g fill="#ffffff" opacity="0.95">
-        <ellipse cx="38" cy="30" rx="13" ry="6" />
-        <ellipse cx="48" cy="26" rx="10" ry="7" />
-        <ellipse cx="56" cy="31" rx="11" ry="5" />
-      </g>
-      <path d="M0 70 Q25 55 50 66 T100 62 V100 H0Z" fill="#7cb342" />
-      <path d="M0 80 Q30 68 60 78 T100 76 V100 H0Z" fill="#558b2f" />
-    </svg>
+    <span className="absolute inset-0 flex items-center justify-center bg-[#f4f2ed]" aria-hidden="true">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/logo-mark.png" alt="" className="w-3/5 max-w-[140px] opacity-60" draggable={false} />
+    </span>
   );
 }
 

@@ -112,6 +112,7 @@ export interface ProductCustomizationDoc {
   order: mongoose.Types.ObjectId;
   productSlug: string;
   size: "2x2" | "2x3";
+  orientation?: "horizontal" | "vertical";
   tiles: TileConfig[];
 }
 const ProductCustomizationSchema = new Schema(
@@ -119,6 +120,7 @@ const ProductCustomizationSchema = new Schema(
     order: { type: Schema.Types.ObjectId, ref: "Order", index: true },
     productSlug: String,
     size: { type: String, enum: ["2x2", "2x3"] },
+    orientation: { type: String, enum: ["horizontal", "vertical"] },
     tiles: [TileSchema],
   },
   { timestamps: true }
@@ -300,7 +302,7 @@ const ShippingSettingsSchema = new Schema(
     key: { type: String, default: "shipping", unique: true },
     shippingEnabled: { type: Boolean, default: true },
     mode: { type: String, enum: ["flat", "zone"], default: "flat" },
-    flatShippingRate: { type: Number, default: 4.99, min: 0 },
+    flatShippingRate: { type: Number, default: 6.99, min: 0 },
     freeShippingThreshold: { type: Number, default: 100, min: 0 },
     localPickupEnabled: { type: Boolean, default: false },
     localPickupNote: { type: String, default: "" },

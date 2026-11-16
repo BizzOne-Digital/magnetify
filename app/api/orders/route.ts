@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     });
 
     const customizations = input.items.map(
-      (item) => new ProductCustomization({ order: order._id, productSlug: item.productSlug, size: pricing.lines.find((l) => l.productSlug === item.productSlug)?.size, tiles: item.tiles })
+      (item) => new ProductCustomization({ order: order._id, productSlug: item.productSlug, size: pricing.lines.find((l) => l.productSlug === item.productSlug)?.size, orientation: item.orientation, tiles: item.tiles })
     );
     order.items = input.items.map((item, idx) => {
       const line = pricing.lines[idx];

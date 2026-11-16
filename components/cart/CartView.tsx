@@ -8,7 +8,7 @@ import { useCart } from "@/components/cart/CartProvider";
 import { TileView } from "@/components/customizer/TileView";
 import { calculatePricing, money, type PricedProduct } from "@/lib/pricing";
 import { freeShippingText, quoteShipping, type ShippingConfig } from "@/lib/shipping";
-import { FRAME_RATIO, filledTiles } from "@/lib/cart/types";
+import { FRAME_RATIO, filledTiles, shapeOf } from "@/lib/cart/types";
 
 export function useCartPricing(products: PricedProduct[]) {
   const { items } = useCart();
@@ -49,7 +49,7 @@ export function CartView({ products, shipping, finalSaleNotice }: { products: Pr
           const p = productBySlug.get(item.productSlug);
           const line = pricing.lines.find((l) => l.productSlug === item.productSlug && l.quantity === filledTiles(item).length);
           const qty = filledTiles(item).length;
-          const ratio = FRAME_RATIO[item.size];
+          const ratio = FRAME_RATIO[shapeOf(item.size, item.orientation)];
           return (
             <li key={item.id} className="card-gold p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row">

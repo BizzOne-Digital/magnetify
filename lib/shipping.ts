@@ -27,7 +27,7 @@ export const PROVINCE_NAMES: Record<string, string> = {
 export const DEFAULT_SHIPPING: ShippingConfig = {
   shippingEnabled: true,
   mode: "flat",
-  flatShippingRate: 4.99,
+  flatShippingRate: 6.99,
   freeShippingThreshold: 100,
   localPickupEnabled: false,
   localPickupNote: "",

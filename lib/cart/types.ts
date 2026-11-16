@@ -1,4 +1,11 @@
 export type MagnetSize = "2x2" | "2x3";
+/** 2x3 magnets can be horizontal (3" wide x 2" tall, default) or vertical (2" wide x 3" tall). */
+export type Orientation = "horizontal" | "vertical";
+/** Size + orientation: what the editor, print render and print sheet actually use. */
+export type MagnetShape = "2x2" | "2x3" | "2x3v";
+export function shapeOf(size: MagnetSize, orientation?: Orientation): MagnetShape {
+  return size === "2x3" && orientation === "vertical" ? "2x3v" : size;
+}
 
 /** Editing state for one magnet. Positions are fractions so they are resolution independent. */
 export interface TileState {
@@ -28,14 +35,17 @@ export interface CartItem {
   productSlug: string;
   size: MagnetSize;
   kind: "photo" | "business";
+  /** Only used for 2x3 magnets. */
+  orientation?: Orientation;
   tiles: TileState[];
   createdAt: number;
 }
 
-export const FRAME_RATIO: Record<MagnetSize, number> = { "2x2": 1, "2x3": 3 / 2 }; // height / width
-export const PRINT_PX: Record<MagnetSize, { w: number; h: number }> = {
+export const FRAME_RATIO: Record<MagnetShape, number> = { "2x2": 1, "2x3": 2 / 3, "2x3v": 3 / 2 }; // height / width
+export const PRINT_PX: Record<MagnetShape, { w: number; h: number }> = {
   "2x2": { w: 600, h: 600 },
-  "2x3": { w: 600, h: 900 },
+  "2x3": { w: 900, h: 600 },
+  "2x3v": { w: 600, h: 900 },
 };
 /** Fold-behind flap on each side of the cut sheet: (2.75" - 2") / 2 = 0.375" at 300 DPI. */
 export const PRINT_FLAP_PX = 113;
