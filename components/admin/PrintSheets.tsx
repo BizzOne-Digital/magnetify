@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Printer } from "lucide-react";
 import { toast } from "sonner";
 
-// A4 at 300 DPI.
-const PAGE_W = 2480;
-const PAGE_H = 3508;
+// US Letter (8.5" x 11") at 300 DPI.
+const PAGE_W = 2550;
+const PAGE_H = 3300;
 // Cut sheet per magnet at 300 DPI (finished face + 3/8" flap each side).
 const LAYOUT = {
   "2x2": { cw: 826, ch: 826, cols: 3, rows: 3 }, // 2.75" x 2.75", 3 across x 3 down
@@ -23,7 +23,7 @@ function load(src: string) {
   });
 }
 
-/** Lays an order line's magnet artworks onto A4 pages, ready to print at 100% (actual size). */
+/** Lays an order line's magnet artworks onto Letter pages, ready to print at 100% (actual size). */
 export function PrintSheets({ urls, size, orderNumber }: { urls: string[]; size: string; orderNumber: string }) {
   const [busy, setBusy] = useState(false);
   const L = LAYOUT[size as keyof typeof LAYOUT] ?? LAYOUT["2x2"];
@@ -56,11 +56,11 @@ export function PrintSheets({ urls, size, orderNumber }: { urls: string[]; size:
         const blob = await new Promise<Blob>((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("Render failed"))), "image/jpeg", 0.95));
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `${orderNumber}-${size === "2x3v" ? "2x3-vertical" : size}-A4-page-${p + 1}.jpg`;
+        a.download = `${orderNumber}-${size === "2x3v" ? "2x3-vertical" : size}-letter-page-${p + 1}.jpg`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 5000);
       }
-      toast.success(`${pages} A4 page${pages > 1 ? "s" : ""} downloaded. Print at 100% / actual size.`);
+      toast.success(`${pages} Letter page${pages > 1 ? "s" : ""} downloaded. Print at 100% / actual size.`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -71,7 +71,7 @@ export function PrintSheets({ urls, size, orderNumber }: { urls: string[]; size:
   return (
     <button type="button" onClick={run} disabled={busy || !urls.length} className="btn-gold inline-flex items-center gap-1.5 px-3 py-1.5 text-xs">
       <Printer className="h-3.5 w-3.5" aria-hidden="true" />
-      {busy ? "Preparing…" : `Download A4 print sheet${pages > 1 ? "s" : ""} (${pages})`}
+      {busy ? "Preparing…" : `Download print sheet${pages > 1 ? "s" : ""} (${pages})`}
     </button>
   );
 }
